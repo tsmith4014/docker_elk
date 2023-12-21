@@ -1,3 +1,4 @@
+#docker-compose.yml
 version: '3.2'
 
 services:
@@ -18,7 +19,7 @@ services:
     image: docker.elastic.co/logstash/logstash:7.15.2
     platform: linux/arm64
     ports:
-      - "127.0.0.1:5000:5000"
+      - "127.0.0.1:5044:5044"
     volumes:
       - type: bind
         source: ./logstash/config
@@ -26,6 +27,8 @@ services:
       - type: bind
         source: ./logstash/pipeline
         target: /usr/share/logstash/pipeline
+    depends_on:
+      - elasticsearch
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.15.2
