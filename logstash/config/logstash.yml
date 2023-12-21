@@ -20,3 +20,4 @@ http.host: "127.0.0.1"
 # This is an array of one or more Elasticsearch instances to which Logstash will send its monitoring data.
 # In this case, it's sending data to an Elasticsearch instance running on the same Docker network (named "elasticsearch") at port 9200.
 xpack.monitoring.elasticsearch.hosts: [ "http://elasticsearch:9200" ]
+xpack.monitoring.enabled: true
