@@ -1,3 +1,15 @@
-#logstash/config/pipelines.yml
+# logstash/config/pipelines.yml
+
+# This YAML file is used to define the pipelines for Logstash.
+# A pipeline is essentially a path that events (like log entries) follow through Logstash.
+
+# Each pipeline is defined as a list item (starting with a "-").
+
+# 'pipeline.id' is a unique identifier for the pipeline. 
+# Here, the pipeline is given the ID 'main'. This ID can be used to manage the pipeline (e.g., to start or stop it).
+
+# 'path.config' specifies the path to the configuration file for this pipeline.
+# The configuration file contains the specific instructions that Logstash follows to process events in this pipeline.
+# Here, the configuration file is located at '/usr/share/logstash/pipeline/logstash.conf'.
 - pipeline.id: main
   path.config: "/usr/share/logstash/pipeline/logstash.conf"

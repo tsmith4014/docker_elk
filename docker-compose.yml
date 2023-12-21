@@ -1,42 +1,159 @@
-#docker-compose.yml
-version: '3.2'
+# docker_elk/docker-compose.yml
+# Docker Compose file for setting up ELK stack (Elasticsearch, Logstash, Kibana)
 
-services:
+version: '3.2'  # Version of Docker Compose file format
+
+services:  # Define the services that make up the application
+
+  # Elasticsearch service
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2
-    platform: linux/arm64
-    environment:
-      - discovery.type=single-node
-    ports:
-      - "127.0.0.1:9200:9200"
-      - "127.0.0.1:9300:9300"
-    volumes:
-      - type: volume
-        source: elasticsearch-data
-        target: /usr/share/elasticsearch/data
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2  # Docker image for Elasticsearch
+    platform: linux/arm64  # Platform specification for the service
+    environment:  # Environment variables for the service
+      - discovery.type=single-node  # Run Elasticsearch in single-node mode
+    ports:  # Port mapping: HOST:CONTAINER
+      - "127.0.0.1:9200:9200"  # Elasticsearch HTTP
+      - "127.0.0.1:9300:9300"  # Elasticsearch TCP transport
+    volumes:  # Define the volumes to be used
+      - type: volume  # Use a named volume
+        source: elasticsearch-data  # Name of the volume
+        target: /usr/share/elasticsearch/data  # Path in the container where the volume is mounted
+    healthcheck:  # Health check for the service
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]  # Command to check the health of the service
+      interval: 30s  # Interval between health checks
+      timeout: 10s  # Time after which the health check times out
+      retries: 5  # Number of retries before the service is marked as unhealthy
 
+  # Logstash service
   logstash:
-    image: docker.elastic.co/logstash/logstash:7.15.2
-    platform: linux/arm64
+    image: docker.elastic.co/logstash/logstash:7.15.2  # Docker image for Logstash
+    platform: linux/arm64  # Platform specification for the service
     ports:
-      - "127.0.0.1:5044:5044"
+      - "127.0.0.1:5044:5044"  # Logstash Beats input
     volumes:
+      - type: bind  # Use a bind mount
+        source: ./logstash/config  # Path on the host
+        target: /usr/share/logstash/config  # Path in the container
       - type: bind
-        source: ./logstash/config
-        target: /usr/share/logstash/config
-      - type: bind
-        source: ./logstash/pipeline
-        target: /usr/share/logstash/pipeline
-    depends_on:
-      - elasticsearch
+        source: ./logstash/pipeline  # Path on the host
+        target: /usr/share/logstash/pipeline  # Path in the container
+    depends_on:  # Define the order of service startup
+      elasticsearch:  # Start Elasticsearch before Logstash
+        condition: service_healthy  # Only start Logstash when Elasticsearch is healthy
 
+  # Kibana service
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.15.2
-    platform: linux/arm64
+    image: docker.elastic.co/kibana/kibana:7.15.2  # Docker image for Kibana
+    platform: linux/arm64  # Platform specification for the service
     ports:
-      - "127.0.0.1:5601:5601"
+      - "127.0.0.1:5601:5601"  # Kibana web interface
     environment:
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200  # URL of the Elasticsearch instance to use
 
 volumes:
-  elasticsearch-data:
+  # Elasticsearch data volume
+  elasticsearch-data:  # Named volume for persisting Elasticsearch data
+
+
+
+
+
+
+# # docker_elk/docker-compose.yml
+# # Docker Compose file for setting up ELK stack (Elasticsearch, Logstash, Kibana)
+
+# version: '3.2'  # Version of Docker Compose file format
+
+# services:  # Define the services that make up the application
+
+#   # Elasticsearch service
+#   elasticsearch:
+#     image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2  # Docker image for Elasticsearch
+#     platform: linux/arm64  # Platform specification for the service
+#     environment:  # Environment variables for the service
+#       - discovery.type=single-node  # Run Elasticsearch in single-node mode
+#     ports:  # Port mapping: HOST:CONTAINER
+#       - "127.0.0.1:9200:9200"  # Elasticsearch HTTP
+#       - "127.0.0.1:9300:9300"  # Elasticsearch TCP transport
+#     volumes:  # Define the volumes to be used
+#       - type: volume  # Use a named volume
+#         source: elasticsearch-data  # Name of the volume
+#         target: /usr/share/elasticsearch/data  # Path in the container where the volume is mounted
+
+#   # Logstash service
+#   logstash:
+#     image: docker.elastic.co/logstash/logstash:7.15.2  # Docker image for Logstash
+#     platform: linux/arm64  # Platform specification for the service
+#     ports:
+#       - "127.0.0.1:5044:5044"  # Logstash Beats input
+#     volumes:
+#       - type: bind  # Use a bind mount
+#         source: ./logstash/config  # Path on the host
+#         target: /usr/share/logstash/config  # Path in the container
+#       - type: bind
+#         source: ./logstash/pipeline  # Path on the host
+#         target: /usr/share/logstash/pipeline  # Path in the container
+#     depends_on:  # Define the order of service startup
+#       - elasticsearch  # Start Elasticsearch before Logstash
+
+#   # Kibana service
+#   kibana:
+#     image: docker.elastic.co/kibana/kibana:7.15.2  # Docker image for Kibana
+#     platform: linux/arm64  # Platform specification for the service
+#     ports:
+#       - "127.0.0.1:5601:5601"  # Kibana web interface
+#     environment:
+#       ELASTICSEARCH_HOSTS: http://elasticsearch:9200  # URL of the Elasticsearch instance to use
+
+# volumes:
+#   # Elasticsearch data volume
+#   elasticsearch-data:  # Named volume for persisting Elasticsearch data
+
+
+
+# # Docker Compose file for setting up ELK stack (Elasticsearch, Logstash, Kibana)
+# version: '3.2'
+
+# services:
+#   # Elasticsearch service
+#   elasticsearch:
+#     image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2
+#     platform: linux/arm64
+#     environment:
+#       - discovery.type=single-node
+#     ports:
+#       - "127.0.0.1:9200:9200"
+#       - "127.0.0.1:9300:9300"
+#     volumes:
+#       - type: volume
+#         source: elasticsearch-data
+#         target: /usr/share/elasticsearch/data
+
+#   # Logstash service
+#   logstash:
+#     image: docker.elastic.co/logstash/logstash:7.15.2
+#     platform: linux/arm64
+#     ports:
+#       - "127.0.0.1:5044:5044"
+#     volumes:
+#       - type: bind
+#         source: ./logstash/config
+#         target: /usr/share/logstash/config
+#       - type: bind
+#         source: ./logstash/pipeline
+#         target: /usr/share/logstash/pipeline
+#     depends_on:
+#       - elasticsearch
+
+#   # Kibana service
+#   kibana:
+#     image: docker.elastic.co/kibana/kibana:7.15.2
+#     platform: linux/arm64
+#     ports:
+#       - "127.0.0.1:5601:5601"
+#     environment:
+#       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+
+# volumes:
+#   # Elasticsearch data volume
+#   elasticsearch-data:
