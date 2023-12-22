@@ -127,11 +127,11 @@ Certainly, let's combine the provided README with the additional testing instruc
 
 ---
 
-# Docker ELK Stack - Comprehensive Implementation and Testing Guide part2/draft2
+## Docker ELK Stack - Comprehensive Implementation and Testing Guide part2/draft2 this is work in progress. Below is basicly same as above with some minor changes.
 
 This guide covers the setup of an ELK (Elasticsearch, Logstash, Kibana) stack using Docker and how to test it with JSON data over TCP. The ELK stack is a powerful suite of tools for searching, analyzing, and visualizing logs from applications and services in real-time.
 
-## File Structure
+### File Structure
 
 Your Docker ELK stack project should have the following structure:
 
