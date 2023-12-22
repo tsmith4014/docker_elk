@@ -119,15 +119,9 @@ This command starts all the services defined in your `docker-compose.yml` file i
 
 Once the stack is running, you can access Kibana by navigating to `http://localhost:5601` in your web browser.
 
-## Conclusion
-
-This guide provided a step-by-step walkthrough for setting up a basic ELK stack using Docker. You can further customize this setup by modifying the configurations based on your specific requirements.
-
-Certainly, let's combine the provided README with the additional testing instructions and configuration differences for Mac M2 and non-Mac systems. Here's the integrated and comprehensive README:
-
 ---
 
-## Docker ELK Stack - Comprehensive Implementation and Testing Guide part2/draft2 this is work in progress. Below is basicly same as above with some minor changes.
+## Docker ELK Stack - Comprehensive Implementation and Testing Guide part2/draft2 this is work in progress. Below is basicly same as above with some minor changes
 
 This guide covers the setup of an ELK (Elasticsearch, Logstash, Kibana) stack using Docker and how to test it with JSON data over TCP. The ELK stack is a powerful suite of tools for searching, analyzing, and visualizing logs from applications and services in real-time.
 
@@ -265,12 +259,6 @@ curl -X GET "http://127.0.0.1:9200/test-logstash-index/_search?q=message:merryxm
 This comprehensive guide provides detailed instructions for setting up and testing a Docker-based ELK stack, suitable for both Mac M2 and non-Mac systems. You can customize this setup further based on your specific requirements, and the testing steps ensure that your configuration is functioning correctly.
 
 ---
-
-This README now combines the detailed setup and testing instructions from both versions, providing a complete guide for your Docker ELK stack project.
-
----
-
-Certainly, let's create a more detailed and comprehensive README with all the necessary commands and code for setting up and configuring your Docker ELK stack.
 
 ---
 
@@ -443,4 +431,187 @@ This guide provides a thorough walkthrough for setting up a Docker-based ELK sta
 
 ---
 
-This README should now offer a fully fleshed-out guide, including all commands and code snippets needed to set up and configure your Docker ELK stack.
+---
+
+# Docker ELK Stack - Complete Setup and Configuration Guide With Filebeat
+
+This guide offers a comprehensive walkthrough for setting up an ELK (Elasticsearch, Logstash, Kibana) stack using Docker, specifically tailored for Mac M1/M2 users, along with configuring Filebeat for log forwarding.
+
+## File Structure
+
+Your project should follow this directory structure:
+
+```
+docker_elk/
+├── docker-compose.yml
+└── logstash/
+    ├── config/
+    │   ├── logstash.yml
+    │   └── pipelines.yml
+    └── pipeline/
+        └── logstash.conf
+```
+
+## Docker Compose Setup (`docker-compose.yml`)
+
+Create a `docker-compose.yml` file with the following content:
+
+```yaml
+version: "3.2"
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2
+    platform: linux/arm64
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - type: volume
+        source: elasticsearch-data
+        target: /usr/share/elasticsearch/data
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.15.2
+    platform: linux/arm64
+    ports:
+      - "5044:5044"
+    volumes:
+      - type: bind
+        source: ./logstash/config
+        target: /usr/share/logstash/config
+      - type: bind
+        source: ./logstash/pipeline
+        target: /usr/share/logstash/pipeline
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.15.2
+    platform: linux/arm64
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+
+volumes:
+  elasticsearch-data:
+```
+
+Run the stack:
+
+```bash
+docker-compose up -d
+```
+
+## Logstash Configuration
+
+### `logstash/config/logstash.yml`
+
+```yaml
+http.host: "127.0.0.1"
+xpack.monitoring.elasticsearch.hosts: ["http://elasticsearch:9200"]
+```
+
+### `logstash/config/pipelines.yml`
+
+```yaml
+- pipeline.id: main
+  path.config: "/usr/share/logstash/pipeline/logstash.conf"
+```
+
+### `logstash/pipeline/logstash.conf`
+
+```conf
+input {
+  beats {
+    port => 5044
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["http://elasticsearch:9200"]
+    index => "test-logstash-index"
+  }
+  stdout { codec => rubydebug }
+}
+```
+
+## Accessing Kibana
+
+Navigate to `http://localhost:5601` in your web browser.
+
+## Configuring Filebeat on Mac
+
+After installing Filebeat, edit its configuration:
+
+```bash
+nano /opt/homebrew/etc/filebeat/filebeat.yml
+```
+
+### Simplified Filebeat Configuration
+
+```yaml
+filebeat.inputs:
+  - type: filestream
+    id: my-filestream-id
+    enabled: true
+    paths:
+      - /var/log/*.log
+
+setup.kibana:
+
+output.logstash:
+  hosts: ["localhost:5044"]
+
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~
+```
+
+This configuration sets up Filebeat to forward logs to Logstash. Save the file and start Filebeat:
+
+```bash
+filebeat -e
+```
+
+## Additional Configuration Steps
+
+### Elasticsearch Index Format Configuration
+
+Create a shell script (`setup_elasticsearch.sh`) for configuring the index:
+
+```bash
+#!/bin/bash
+curl -XDELETE "http://localhost:9200/test-logstash-index"
+curl -XPUT "http://localhost:9200/test-logstash-index" -H 'Content-Type: application/json' -d'
+{
+  "mappings": {
+    "properties": {
+      "host": {
+        "type": "object"
+      }
+    }
+  }
+}'
+```
+
+Make the script executable and run it:
+
+```bash
+chmod +x setup_elasticsearch.sh
+./setup_elasticsearch.sh
+```
+
+### Monitoring and Debugging
+
+- **Check Elasticsearch Indices**: `curl -X GET "localhost:9200/_cat/indices?v"`
+- **View Logstash Logs**: `docker logs [logstash_container_id]`
+
+### Ensuring Successful Logging to Kibana
