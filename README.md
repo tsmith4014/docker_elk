@@ -122,3 +122,148 @@ Once the stack is running, you can access Kibana by navigating to `http://localh
 ## Conclusion
 
 This guide provided a step-by-step walkthrough for setting up a basic ELK stack using Docker. You can further customize this setup by modifying the configurations based on your specific requirements.
+
+Certainly, let's combine the provided README with the additional testing instructions and configuration differences for Mac M2 and non-Mac systems. Here's the integrated and comprehensive README:
+
+---
+
+# Docker ELK Stack - Comprehensive Implementation and Testing Guide part2/draft2
+
+This guide covers the setup of an ELK (Elasticsearch, Logstash, Kibana) stack using Docker and how to test it with JSON data over TCP. The ELK stack is a powerful suite of tools for searching, analyzing, and visualizing logs from applications and services in real-time.
+
+## File Structure
+
+Your Docker ELK stack project should have the following structure:
+
+```
+docker_elk/
+├── docker-compose.yml
+└── logstash/
+    ├── config/
+    │   ├── logstash.yml
+    │   └── pipelines.yml
+    └── pipeline/
+        └── logstash.conf
+```
+
+## Step-by-Step Implementation
+
+### 1. Docker Compose File (`docker-compose.yml`)
+
+Defines the services for the ELK stack, including Elasticsearch, Logstash, and Kibana.
+
+```yaml
+version: "3.2"
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2
+    platform: linux/arm64 # Uncomment for Mac M2, comment out for non-Mac
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - type: volume
+        source: elasticsearch-data
+        target: /usr/share/elasticsearch/data
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.15.2
+    platform: linux/arm64 # Uncomment for Mac M2, comment out for non-Mac
+    ports:
+      - "5044:5044" # For Beats input
+      - "5000:5000" # For TCP input (JSON data)
+    volumes:
+      - type: bind
+        source: ./logstash/config
+        target: /usr/share/logstash/config
+      - type: bind
+        source: ./logstash/pipeline
+        target: /usr/share/logstash/pipeline
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.15.2
+    platform: linux/arm64 # Uncomment for Mac M2, comment out for non-Mac
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+
+volumes:
+  elasticsearch-data:
+```
+
+### 2. Logstash Configuration
+
+#### `logstash/config/logstash.yml`
+
+Configures Logstash settings, including HTTP host binding and Elasticsearch monitoring.
+
+#### `logstash/config/pipelines.yml`
+
+Defines the main pipeline for Logstash.
+
+#### `logstash/pipeline/logstash.conf`
+
+Specifies the input and output configurations for Logstash.
+
+```conf
+input {
+  beats {
+    port => 5044
+  }
+  tcp {
+    port => 5000
+    codec => json
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["http://elasticsearch:9200"]
+    index => "test-logstash-index"
+  }
+  stdout { codec => rubydebug }
+}
+```
+
+### 3. Running the ELK Stack
+
+Execute the following command to start the services:
+
+```sh
+docker-compose up -d
+```
+
+### 4. Accessing Kibana
+
+Kibana is accessible at `http://localhost:5601`.
+
+### 5. Testing the Setup
+
+#### Sending JSON Data to Logstash
+
+Send a JSON message to Logstash's TCP input:
+
+```bash
+echo '{"status": "success", "message": "merryxmas"}' | nc 127.0.0.1 5000
+```
+
+#### Verifying Data in Elasticsearch
+
+Check if the message is indexed in Elasticsearch:
+
+```bash
+curl -X GET "http://127.0.0.1:9200/test-logstash-index/_search?q=message:merryxmas&pretty"
+```
+
+## Conclusion
+
+This comprehensive guide provides detailed instructions for setting up and testing a Docker-based ELK stack, suitable for both Mac M2 and non-Mac systems. You can customize this setup further based on your specific requirements, and the testing steps ensure that your configuration is functioning correctly.
+
+---
+
+This README now combines the detailed setup and testing instructions from both versions, providing a complete guide for your Docker ELK stack project.
