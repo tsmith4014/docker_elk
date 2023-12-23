@@ -30,7 +30,7 @@ services:  # Define the services that make up the application
     platform: linux/arm64  # Platform specification for the service
     ports:
       - "127.0.0.1:5044:5044"  # Logstash Beats input
-      - "127.0.0.1:5000:5000"  # Logstash TCP input
+      - "127.0.0.1:5000:5000"  # Logstash TCP input for manual testing
     volumes:
       - type: bind  # Use a bind mount
         source: ./logstash/config  # Path on the host
